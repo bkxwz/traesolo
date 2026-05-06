@@ -22,28 +22,25 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Setup Expo
-        uses: expo/expo-github-action@v8
+      - name: Setup Java
+        uses: actions/setup-java@v4
         with:
-          expo-version: latest
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
 
       - name: Install dependencies
         run: npm install
 
-      - name: Build APK with EAS
-        run: eas build --platform android --profile preview --non-interactive
-
-      - name: Download APK
-        run: |
-          eas build:list --platform android --status FINISHED --limit 1 --json > build_info.json
-          BUILD_ID=$(cat build_info.json | jq -r '.[0].id')
-          eas build:download $BUILD_ID --output app.apk
+      - name: Build APK with Expo
+        run: npx expo build:android --type apk --non-interactive
+        timeout-minutes: 30
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-apk
-          path: app.apk
+          path: build/*.apk
           retention-days: 30
